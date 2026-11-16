@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ROBO-ENERGI: Misi Menyalakan Kota Energi</title>
+<style>
+:root{
+  --navy:#0b2a6f; --blue:#2f7bff; --sky:#cfe8ff; --sky2:#e8f4ff; --yellow:#ffd23f; --white:#fff;
+  --ok:#0a7d3b; --bad:#b3261e;
+  --e-listrik:#ffd23f; --e-cahaya:#fff4b8; --e-panas:#ffa24a; --e-gerak:#8fe388; --e-bunyi:#d3b4ff; --e-kimia:#ffb3d1;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--navy);color:var(--navy);
+  font-family:'Fredoka','Nunito','Trebuchet MS',system-ui,sans-serif;font-size:clamp(20px,1.7vw,28px);line-height:1.5}
+#app{min-height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,var(--sky) 0%,var(--sky2) 100%)}
+.sr{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:4px solid var(--yellow);outline-offset:3px;box-shadow:0 0 0 7px var(--navy)}
+h1,h2,h3{margin:.2em 0;line-height:1.2}
+h1{font-size:clamp(28px,3vw,40px)}
+h2{font-size:clamp(24px,2.4vw,34px)}
+.btn{background:var(--yellow);color:var(--navy);border:4px solid var(--navy);border-radius:18px;padding:.45em 1em;font-weight:700;
+  box-shadow:0 5px 0 var(--navy);transition:transform .1s}
+.btn:hover{transform:translateY(-2px)} .btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--navy)}
+.btn.sm{padding:.15em .6em;font-size:.8em;border-radius:12px;box-shadow:0 3px 0 var(--navy)}
+.btn.blue{background:var(--blue);color:#fff}
+.btn.ghost{background:#fff}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--navy);color:#fff;padding:8px 16px}
+.bar .btn{border-color:#fff;box-shadow:0 3px 0 #000}
+.bar .chip{background:#fff;color:var(--navy);padding:.1em .7em;border-radius:999px;font-weight:700}
+.bar .sp{flex:1}
+main{flex:1;padding:16px clamp(12px,3vw,40px) 24px;max-width:1280px;width:100%;margin:0 auto}
+.card{background:#fff;border:4px solid var(--navy);border-radius:22px;padding:18px 22px;box-shadow:0 6px 0 var(--navy)}
+.row{display:flex;gap:16px;flex-wrap:wrap;align-items:stretch}
+.grow{flex:1 1 280px}
+.center{text-align:center}
+.muted{opacity:.85}
+.robi{display:flex;align-items:flex-end;gap:12px;margin-top:14px}
+.bubble{position:relative;background:#fff;border:4px solid var(--navy);border-radius:20px;padding:10px 18px;flex:1;max-width:860px;font-weight:600}
+.bubble:before{content:"";position:absolute;left:-18px;bottom:22px;border:10px solid transparent;border-right:14px solid var(--navy)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:.5em 1.2em;border-radius:16px;border:3px solid var(--yellow);z-index:50;max-width:90vw}
+/* opening */
+.open{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:linear-gradient(180deg,#071b4d,#0b2a6f 60%,#1d4fb5)}
+.open #city{position:absolute;left:0;right:0;bottom:0;width:100%;height:46%}
+.open .w{fill:#16357f;transition:fill .6s}
+.open #city.on .w{fill:var(--yellow)}
+.open #city.on .w:nth-child(3n){transition-delay:.3s} .open #city.on .w:nth-child(3n+1){transition-delay:.6s}
+.stars{position:absolute;inset:0;pointer-events:none}
+.stars i{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--yellow);animation:tw 3s infinite}
+@keyframes tw{50%{opacity:.25}}
+.open-c{position:relative;z-index:2;text-align:center;color:#fff;padding:20px;max-width:900px}
+.logo{font-size:clamp(44px,7vw,92px);font-weight:800;color:var(--yellow);text-shadow:0 5px 0 #000;letter-spacing:2px}
+.sub{font-size:clamp(22px,2.6vw,36px);margin:0 0 6px}
+.open .bub{background:#fff;color:var(--navy);border:4px solid var(--navy);border-radius:20px;padding:10px 20px;display:inline-block;font-weight:700;margin:6px 0 18px}
+.start{font-size:clamp(34px,4vw,56px);padding:.3em 1.6em;letter-spacing:3px;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.credit{font-size:.7em;opacity:.9;margin-top:22px}
+/* menu */
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin:14px 0}
+.bld{background:#fff;border:4px solid var(--navy);border-radius:22px;padding:14px;text-align:center;box-shadow:0 6px 0 var(--navy)}
+.bld .em{font-size:3em;line-height:1.1}
+.bld.locked{background:#c9d3e6;filter:grayscale(.8)}
+.bld.done{background:#fff7cc}
+.bld:hover:not(.locked){transform:translateY(-3px)}
+.lamps{display:flex;gap:8px;font-size:1.6em}
+.lamps span{opacity:.3;filter:grayscale(1)} .lamps span.on{opacity:1;filter:none}
+.shake{animation:shk .4s}
+@keyframes shk{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* energy chips */
+.en{display:inline-flex;align-items:center;gap:6px;border:3px solid var(--navy);border-radius:999px;padding:.05em .7em;font-weight:700;background:#fff}
+.en.listrik{background:var(--e-listrik)} .en.cahaya{background:var(--e-cahaya)} .en.panas{background:var(--e-panas)}
+.en.gerak{background:var(--e-gerak)} .en.bunyi{background:var(--e-bunyi)} .en.kimia{background:var(--e-kimia)}
+.pick{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0}
+.pick button{border:4px solid var(--navy);border-radius:16px;padding:.25em .8em;font-weight:700;background:#fff}
+.pick button.listrik{background:var(--e-listrik)} .pick button.cahaya{background:var(--e-cahaya)} .pick button.panas{background:var(--e-panas)}
+.pick button.gerak{background:var(--e-gerak)} .pick button.bunyi{background:var(--e-bunyi)} .pick button.kimia{background:var(--e-kimia)}
+.pick button[aria-pressed="true"]{outline:5px solid var(--navy);outline-offset:2px;transform:scale(1.05)}
+.pick button[aria-pressed="true"]:after{content:" ✔"}
+.items{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.item{background:#fff;border:4px solid var(--navy);border-radius:20px;padding:12px;text-align:center;font-weight:700;box-shadow:0 5px 0 var(--navy)}
+.item .em{font-size:3.2em;line-height:1.1;display:block}
+.item.ok{background:#d9f7e3;border-color:var(--ok)}
+.item.miss{background:#ffe1de;border-color:var(--bad)}
+.item.sel{outline:6px solid var(--yellow);outline-offset:2px;box-shadow:0 0 0 10px var(--navy)}
+.item small{display:block;font-weight:600}
+.modal{position:fixed;inset:0;background:rgba(7,27,77,.75);display:flex;align-items:center;justify-content:center;z-index:40;padding:14px}
+.modal .card{max-width:820px;width:100%;max-height:92vh;overflow:auto}
+.fb{border:4px solid var(--navy);border-radius:16px;padding:8px 14px;margin:10px 0;font-weight:700}
+.fb.ok{background:#d9f7e3;border-color:var(--ok)} .fb.no{background:#ffe9d6;border-color:#c25b00}
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:10px 0;font-weight:700}
+.arrow{font-size:1.4em}
+.slots{display:flex;flex-wrap:wrap;gap:12px;align-items:stretch;margin:10px 0}
+.slot{min-width:150px;min-height:92px;border:4px dashed var(--navy);border-radius:18px;background:#fff;padding:8px;text-align:center;display:flex;flex-direction:column;justify-content:center;font-weight:700}
+.slot.filled{border-style:solid;background:#fff7cc}
+.slot.bad{background:#ffe1de;border-color:var(--bad)}
+.slot.good{background:#d9f7e3;border-color:var(--ok)}
+.slot .no{font-size:.8em;opacity:.8}
+.cards{display:flex;flex-wrap:wrap;gap:12px;margin:10px 0}
+.cards button{border:4px solid var(--navy);border-radius:16px;background:#fff;padding:.4em .9em;font-weight:700;box-shadow:0 4px 0 var(--navy)}
+.opts{display:grid;gap:12px;margin:12px 0}
+.opts button{text-align:left;border:4px solid var(--navy);border-radius:16px;background:#fff;padding:.45em 1em;font-weight:600;box-shadow:0 4px 0 var(--navy)}
+.opts button[aria-pressed="true"]{background:var(--yellow)}
+.opts button.right{background:#d9f7e3;border-color:var(--ok)} .opts button.wrong{background:#ffe1de;border-color:var(--bad)}
+.opts button .k{display:inline-block;width:1.8em;height:1.8em;line-height:1.6em;text-align:center;border-radius:50%;background:var(--navy);color:#fff;margin-right:.6em}
+.prog{height:18px;background:#fff;border:3px solid var(--navy);border-radius:999px;overflow:hidden;margin:6px 0 12px}
+.prog i{display:block;height:100%;background:var(--blue)}
+.dots{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.dots i{width:16px;height:16px;border-radius:50%;background:#fff;border:3px solid var(--navy)} .dots i.on{background:var(--yellow)}
+table{border-collapse:collapse;width:100%;background:#fff}
+th,td{border:3px solid var(--navy);padding:.3em .6em;text-align:left;font-size:.85em}
+th{background:var(--navy);color:#fff}
+tr.r-ok td:first-child{background:#d9f7e3} tr.r-no td:first-child{background:#ffe1de}
+.score{font-size:clamp(60px,9vw,120px);font-weight:800;line-height:1}
+.pass{color:var(--ok)} .fail{color:var(--bad)}
+.stage{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:center;margin:10px 0}
+.lab-box{background:#fff;border:4px solid var(--navy);border-radius:20px;padding:10px 16px;min-width:150px;text-align:center;font-weight:700}
+.glow{animation:glow 1s infinite alternate}
+@keyframes glow{to{filter:drop-shadow(0 0 14px #ffd23f);transform:scale(1.12)}}
+.spin{display:inline-block;animation:spn 1s linear infinite}
+@keyframes spn{to{transform:rotate(360deg)}}
+.bounce{display:inline-block;animation:bnc .5s infinite alternate}
+@keyframes bnc{to{transform:translateY(-8px)}}
+/* AR lite */
+.ar{position:relative;height:min(60vh,520px);border:4px solid var(--navy);border-radius:22px;overflow:hidden;background:linear-gradient(160deg,#8fb8ff,#e8f4ff 55%,#c9e8c0)}
+.ar video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ar .floater{position:absolute;font-size:4.5em;background:rgba(255,255,255,.85);border:4px solid var(--navy);border-radius:50%;width:1.6em;height:1.6em;display:flex;align-items:center;justify-content:center;animation:flt 2.4s ease-in-out infinite alternate}
+.ar .floater:nth-of-type(2){animation-delay:.6s} .ar .floater:nth-of-type(3){animation-delay:1.2s}
+@keyframes flt{to{transform:translateY(-18px) rotate(6deg)}}
+.ar .label{position:absolute;left:12px;right:12px;bottom:12px;background:#fff;border:4px solid var(--navy);border-radius:16px;padding:8px 14px;font-weight:700}
+body.calm *,body.calm *:before,body.calm *:after{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+@media (max-width:640px){.bubble:before{display:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="live" class="sr" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ==========================================================
+   ROBO-ENERGI: Misi Menyalakan Kota Energi
+   IPAS Kelas 4 - Perubahan Energi di Sekitar Kita
+   Satu file HTML mandiri (tanpa internet).
+   ========================================================== */
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function say(t){ const l = $('#live'); l.textContent = ''; setTimeout(() => l.textContent = t, 60); }
+
+/* ---------- Fullscreen API (dipicu tombol START) ---------- */
+function enterFullscreen(){
+  const el = document.documentElement;
+  const request = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+  if (!request) return Promise.resolve(false);
+  try { return Promise.resolve(request.call(el)).then(() => true).catch(() => false); }
+  catch (e) { return Promise.resolve(false); }
+}
+function exitFullscreen(){
+  const ex = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+  if (ex && isFs()) { try { ex.call(document); } catch (e) {} }
+}
+function isFs(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function updateFsBtn(){ const b = $('#bFs'); if (b) b.textContent = isFs() ? '⛶ Keluar Layar Penuh' : '⛶ Layar Penuh'; }
+document.addEventListener('fullscreenchange', updateFsBtn);
+document.addEventListener('webkitfullscreenchange', updateFsBtn);
+
+/* ---------- Suara sederhana ---------- */
+let mute = false, calm = false, ac = null;
+function beep(f, d = .12, type = 'sine', delay = 0){
+  if (mute) return;
+  setTimeout(() => {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type; o.frequency.value = f; g.gain.value = .07;
+      o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + d);
+    } catch (e) {}
+  }, delay);
+}
+const sfx = {
+  click: () => beep(440, .05),
+  ok: () => { beep(660); beep(880, .15, 'sine', 110); },
+  no: () => beep(180, .22, 'square'),
+  win: () => { [523, 659, 784, 1047].forEach((f, i) => beep(f, .16, 'triangle', i * 130)); },
+  on: () => beep(300, .5, 'sawtooth')
+};
+
+/* ---------- Data energi ---------- */
+const EN = {
+  listrik: {n: 'Listrik', i: '⚡'}, cahaya: {n: 'Cahaya', i: '💡'}, panas: {n: 'Panas', i: '🔥'},
+  gerak: {n: 'Gerak', i: '🌀'}, bunyi: {n: 'Bunyi', i: '🔊'}, kimia: {n: 'Kimia', i: '🧪'}
+};
+const enChip = k => `<span class="en ${k}"><span aria-hidden="true">${EN[k].i}</span>${EN[k].n}</span>`;
+
+const MISI = {
+  m1: {n: 'Detektif Energi', e: '🏠', t: 'Rumah Detektif', badge: 'Detektif Energi'},
+  m2: {n: 'Lab Mesin Pengubah Energi', e: '🔬', t: 'Laboratorium', badge: 'Ilmuwan Lab'},
+  m3: {n: 'Rantai Energi', e: '🚂', t: 'Pembangkit', badge: 'Perangkai Rantai'},
+  m4: {n: 'Manfaat dan Dampak', e: '🌳', t: 'Taman Manfaat', badge: 'Penjaga Energi'},
+  m5: {n: 'Jelajah AR', e: '📡', t: 'Menara AR', badge: 'Penjelajah AR'}
+};
+
+/* ---------- Status permainan ---------- */
+const blank = () => ({materi: false, misi: {}, badges: [], hasil: null});
+let S = blank();
+let cur = 'pembuka', helpText = '';
+let camStream = null;
+
+function totals(){
+  let skor = 0, bint = 0;
+  Object.values(S.misi).forEach(m => { skor += m.pts; bint += m.stars; });
+  return {skor, bint};
+}
+const passed = k => !!(S.misi[k] && S.misi[k].pass);
+
+/* ---------- Kerangka tampilan ---------- */
+function robi(mood = 'senang', size = 120){
+  const mouths = {senang: 'M44 70 Q60 82 76 70', semangat: 'M40 68 Q60 90 80 68', berpikir: 'M46 74 L74 74', sedih: 'M46 78 Q60 66 74 78'};
+  return `<svg viewBox="0 0 120 150" width="${size}" height="${size * 1.25}" role="img" aria-label="Robi, robot pembimbing">
+  <line x1="60" y1="8" x2="60" y2="26" stroke="#0b2a6f" stroke-width="5"/>
+  <circle cx="60" cy="8" r="8" fill="#ffd23f" stroke="#0b2a6f" stroke-width="3"/>
+  <rect x="18" y="26" width="84" height="70" rx="22" fill="#2f7bff" stroke="#0b2a6f" stroke-width="5"/>
+  <rect x="30" y="38" width="60" height="46" rx="14" fill="#cfe8ff" stroke="#0b2a6f" stroke-width="3"/>
+  <circle cx="48" cy="54" r="6" fill="#0b2a6f"/><circle cx="72" cy="54" r="6" fill="#0b2a6f"/>
+  <path d="${mouths[mood] || mouths.senang}" fill="none" stroke="#0b2a6f" stroke-width="4" stroke-linecap="round"/>
+  <rect x="32" y="100" width="56" height="40" rx="12" fill="#2f7bff" stroke="#0b2a6f" stroke-width="5"/>
+  <circle cx="60" cy="120" r="8" fill="#ffd23f" stroke="#0b2a6f" stroke-width="3"/></svg>`;
+}
+function robiSay(text, mood = 'senang', id = 'robiMsg'){
+  return `<div class="robi">${robi(mood, 90)}<div class="bubble" id="${id}" role="status">${text}</div></div>`;
+}
+function setRobi(text, mood){
+  const b = $('#robiMsg'); if (!b) return;
+  b.innerHTML = text; say(b.textContent);
+  if (mood){ const svg = b.parentElement.querySelector('svg'); if (svg) { const t = document.createElement('div'); t.innerHTML = robi(mood, 90); svg.replaceWith(t.firstChild); } }
+}
+function bar(){
+  const t = totals();
+  return `<header class="bar" role="banner">
+    <button class="btn sm" data-a="menu">🏠 Menu</button>
+    <span class="chip">⭐ Bintang: ${t.bint}</span><span class="chip">🏆 Skor: ${t.skor}</span>
+    <span class="sp"></span>
+    <button class="btn sm" data-a="mute" aria-pressed="${mute}">${mute ? '🔇 Suara mati' : '🔊 Suara'}</button>
+    <button class="btn sm" data-a="calm" aria-pressed="${calm}">🐢 Kurangi Gerak</button>
+    <button class="btn sm" data-a="fs" id="bFs">${isFs() ? '⛶ Keluar Layar Penuh' : '⛶ Layar Penuh'}</button>
+    <button class="btn sm" data-a="help" aria-label="Bantuan Robi (tombol tanda tanya)">? Bantuan</button>
+  </header>`;
+}
+function stopCam(){ if (camStream){ camStream.getTracks().forEach(t => t.stop()); camStream = null; } }
+function view(html, help, title){
+  stopCam(); closeModal();
+  helpText = help || '';
+  app.innerHTML = bar() + `<main id="main" tabindex="-1">${html}</main>`;
+  window.scrollTo(0, 0);
+  const m = $('#main'); if (m) m.focus({preventScroll: true});
+  if (title) say(title);
+}
+function toast(msg){
+  const old = $('.toast'); if (old) old.remove();
+  const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
+}
+let lastFocus = null;
+function openModal(html){
+  closeModal();
+  lastFocus = document.activeElement;
+  const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal';
+  m.innerHTML = `<div class="card" role="dialog" aria-modal="true" tabindex="-1">${html}</div>`;
+  document.body.appendChild(m);
+  const c = m.querySelector('.card'); c.focus();
+  return c;
+}
+function closeModal(){
+  const m = $('#modal'); if (m){ m.remove(); if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === '?' && cur !== 'pembuka' && !/INPUT|TEXTAREA/.test(e.target.tagName)) actions.help();
+});
+
+/* ---------- Aksi global (delegasi klik) ---------- */
+const actions = {
+  menu: () => menu(),
+  mute: b => { mute = !mute; sfx.click(); const x = $('[data-a="mute"]'); if (x){ x.setAttribute('aria-pressed', mute); x.textContent = mute ? '🔇 Suara mati' : '🔊 Suara'; } },
+  calm: () => { calm = !calm; document.body.classList.toggle('calm', calm); const x = $('[data-a="calm"]'); if (x) x.setAttribute('aria-pressed', calm); },
+  fs: () => { isFs() ? exitFullscreen() : enterFullscreen(); },
+  help: () => {
+    const c = openModal(`<h2>Bantuan Robi 🤖</h2><p>${helpText || 'Klik atau tekan Enter pada tombol. Tombol Tab untuk berpindah, Esc untuk menutup.'}</p>
+      <p class="muted">Tips: Tab = pindah tombol, Enter atau Spasi = pilih, Esc = tutup jendela.</p>
+      <button class="btn" data-a="close">Mengerti!</button>`);
+  },
+  close: () => closeModal()
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]');
+  if (!b || b.getAttribute('aria-disabled') === 'true') return;
+  const f = actions[b.dataset.a];
+  if (f){ sfx.click(); f(b); }
+});
+
+/* ==========================================================
+   P1. HALAMAN PEMBUKA
+   ========================================================== */
+function pembuka(){
+  cur = 'pembuka'; helpText = '';
+  let wins = '', bld = '', x = 0;
+  const hs = [90, 140, 110, 170, 120, 150, 100, 160, 130, 110];
+  hs.forEach((h, i) => {
+    const w = 72; bld += `<rect x="${x}" y="${200 - h}" width="${w}" height="${h}" fill="#08205a"/>`;
+    for (let r = 0; r < Math.floor(h / 34); r++) for (let c = 0; c < 2; c++)
+      wins += `<rect class="w" x="${x + 10 + c * 30}" y="${200 - h + 10 + r * 34}" width="20" height="20" rx="3"/>`;
+    x += w + 8;
+  });
+  let st = ''; for (let i = 0; i < 26; i++) st += `<i style="left:${(i * 37) % 100}%;top:${(i * 53) % 55}%;animation-delay:${(i % 7) * .4}s"></i>`;
+  app.innerHTML = `<section class="open" aria-labelledby="judul">
+    <div class="stars" aria-hidden="true">${st}</div>
+    <svg id="city" viewBox="0 0 800 200" preserveAspectRatio="xMidYMax slice" aria-hidden="true">${bld}${wins}</svg>
+    <div class="open-c">
+      <div class="logo" id="judul">ROBO-ENERGI</div>
+      <p class="sub">Misi Menyalakan Kota Energi</p>
+      <div>${robi('berpikir', 150)}</div>
+      <div class="bub">Halo, Agen Energi! Kotaku gelap gulita. Maukah kamu membantuku?</div><br>
+      <button class="btn start" id="btnStart">START</button>
+      <p class="credit">IPAS Kelas 4 · Perubahan Energi di Sekitar Kita<br>Pengembang: Jasrin R. Nupura, S.Pd., Gr.</p>
+    </div></section>`;
+  const sb = $('#btnStart'); sb.focus();
+  sb.onclick = () => {
+    enterFullscreen();             /* Fullscreen dipicu langsung oleh klik START */
+    sb.disabled = true; sfx.on();
+    $('#city').classList.add('on');
+    setTimeout(() => { sfx.win(); menu(); }, calm ? 200 : 1300);
+  };
+}
+
+/* ==========================================================
+   P2. MENU UTAMA
+   ========================================================== */
+function lockInfo(k){
+  if (k === 'm1') return S.materi ? '' : 'Baca Materi dulu ya, Agen! Tekan tombol Materi.';
+  const prev = {m2: 'm1', m3: 'm2', m4: 'm3', m5: 'm4'}[k];
+  return passed(prev) ? '' : `Selesaikan Misi ${prev.slice(1)} dulu supaya gedung ini menyala!`;
+}
+function menu(){
+  cur = 'menu';
+  const done = ['m1', 'm2', 'm3', 'm4', 'm5'].filter(passed).length;
+  const opens = ['m1', 'm2', 'm3', 'm4', 'm5'].map(k => {
+    const lk = lockInfo(k), m = MISI[k], r = S.misi[k];
+    return `<button class="bld ${lk ? 'locked' : ''} ${passed(k) ? 'done' : ''}" data-a="open" data-v="${k}" ${lk ? 'aria-disabled="true"' : ''}>
+      <div class="em" aria-hidden="true">${lk ? '🔒' : m.e}</div>
+      <strong>Misi ${k.slice(1)}${k === 'm5' ? ' (pengayaan)' : ''}</strong><br>${m.n}<br>
+      <small>${lk ? 'Terkunci' : passed(k) ? '⭐'.repeat(r.stars) + ' ' + r.pts + '/' + r.max + ' poin' : 'Siap dimainkan'}</small></button>`;
+  }).join('');
+  const quizOk = passed('m4');
+  view(`<h1>Kota Energi 🏙️</h1>
+    <div class="lamps" aria-label="Lampu kota menyala ${done} dari 5">${[1, 2, 3, 4, 5].map(i => `<span class="${i <= done ? 'on' : ''}">💡</span>`).join('')}</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" data-a="petunjuk">📖 Petunjuk</button>
+      <button class="btn" data-a="tujuan">🎯 Tujuan</button>
+      <button class="btn blue" data-a="materi">📚 Materi ${S.materi ? '✔' : ''}</button>
+      <button class="btn ghost" data-a="rank">🏅 Peringkat</button>
+    </div>
+    <div class="map" id="map">${opens}</div>
+    <div class="row">
+      <button class="btn" data-a="formatif" ${quizOk ? '' : 'aria-disabled="true"'}>📝 Kuis Formatif ${quizOk ? '' : '🔒'}</button>
+      <button class="btn blue" data-a="asesmen" ${quizOk ? '' : 'aria-disabled="true"'}>🏁 Asesmen Akhir ${quizOk ? '' : '🔒'}</button>
+    </div>
+    ${robiSay(done === 0 ? 'Pilih gedung yang menyala. Selesaikan misi untuk membuka gedung berikutnya!' : done < 4 ? 'Bagus! Lampu kota makin terang. Lanjut ke gedung berikutnya!' : 'Kota hampir terang benderang! Ayo kerjakan kuis dan asesmen akhir.', 'senang')}`,
+    'Pilih gedung yang menyala (tidak terkunci). Gedung terbuka berurutan setelah misi sebelumnya selesai. Baca Materi sebelum Misi 1. Kuis dan Asesmen terbuka setelah Misi 4 selesai.', 'Menu utama Kota Energi');
+}
+actions.open = b => {
+  const k = b.dataset.v, lk = lockInfo(k);
+  if (lk){ sfx.no(); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); setRobi(lk, 'berpikir'); return; }
+  ({m1: misi1, m2: misi2, m3: misi3, m4: misi4, m5: misi5})[k]();
+};
+actions.formatif = b => { if (!passed('m4')){ sfx.no(); setRobi('Selesaikan Misi 1 sampai 4 dulu untuk membuka kuis!', 'berpikir'); return; } formatif(); };
+actions.asesmen = b => { if (!passed('m4')){ sfx.no(); setRobi('Selesaikan Misi 1 sampai 4 dulu untuk membuka asesmen!', 'berpikir'); return; } asesmenIntro(); };
+
+/* ---------- P3 Petunjuk, P4 Tujuan ---------- */
+actions.petunjuk = () => view(`<h1>Petunjuk Penggunaan 📖</h1>
+  <div class="row">
+    <div class="card grow center"><div style="font-size:3em">👆</div><strong>Klik</strong><br>Sentuh atau klik untuk memilih.</div>
+    <div class="card grow center"><div style="font-size:3em">🧩</div><strong>Pilih lalu tempatkan</strong><br>Pilih kartu, lalu pilih tempatnya.</div>
+    <div class="card grow center"><div style="font-size:3em">⌨️</div><strong>Keyboard</strong><br>Tab pindah, Enter pilih, Esc tutup.</div>
+    <div class="card grow center"><div style="font-size:3em">🤖</div><strong>Bantuan Robi</strong><br>Tekan tombol ? kapan saja.</div>
+  </div><p><button class="btn" data-a="menu">Mengerti!</button></p>${robiSay('Kalau bingung, tekan tombol Bantuan. Salah itu tidak apa-apa, itu cara belajar!', 'semangat')}`,
+  'Ada empat cara bermain: klik, pilih lalu tempatkan, keyboard, dan bantuan Robi.', 'Petunjuk penggunaan');
+actions.tujuan = () => view(`<h1>Tujuan Pembelajaran 🎯</h1>
+  <div class="row">
+    <div class="card grow center"><div style="font-size:3em">🔎</div><strong>1.</strong> Menemukan energi yang berubah di sekitarmu.</div>
+    <div class="card grow center"><div style="font-size:3em">🚂</div><strong>2.</strong> Menyusun rantai perubahan energi.</div>
+    <div class="card grow center"><div style="font-size:3em">🌳</div><strong>3.</strong> Mengetahui manfaat perubahan energi dan cara memakainya dengan bijak.</div>
+  </div><p>Targetmu: jawab benar minimal <strong>8 dari 10</strong> soal asesmen akhir (nilai 80).</p>
+  <p><button class="btn" data-a="menu">Siap!</button></p>${robiSay('Setelah semua misi selesai, kamu akan jadi Agen Energi sejati!', 'semangat')}`,
+  'Tiga tujuan belajar hari ini. Nilai minimal 80 untuk lulus.', 'Tujuan pembelajaran');
+
+/* ==========================================================
+   P5. MATERI UTAMA (5 kartu)
+   ========================================================== */
+const MATERI = [
+  {t: 'Energi bisa berubah!', ill: '<span class="glow" style="font-size:4em">💡</span>',
+   b: 'Lihat lampu di kelasmu. Saat saklar ditekan, lampu menyala. <strong>Energi listrik berubah menjadi energi cahaya.</strong> Energi tidak hilang, ia hanya berganti bentuk. Itulah rahasia pertama Agen Energi!',
+   q: 'Pikirkan: kenapa setrika terasa panas?'},
+  {t: 'Pola ajaib perubahan energi', ill: `<div class="chain">${enChip('listrik')}<span class="arrow">➜</span><span class="en">🌬️ Kipas</span><span class="arrow">➜</span>${enChip('gerak')}</div>`,
+   b: 'Setiap perubahan energi punya pola: <strong>Energi masuk ➜ Alat atau proses ➜ Energi keluar.</strong> Contoh: listrik ➜ kipas angin ➜ gerak. Kalau kamu bisa menebak ketiganya, kamu sudah jadi detektif energi.',
+   q: 'Pikirkan: energi apa yang keluar dari speaker?'},
+  {t: 'Perubahan energi di sekitar kita', ill: '',
+   b: `<table><tr><th>Benda atau peristiwa</th><th>Energi masuk</th><th>Energi keluar</th></tr>
+   <tr><td>💡 Lampu</td><td>Listrik</td><td>Cahaya (dan sedikit panas)</td></tr>
+   <tr><td>🌬️ Kipas angin</td><td>Listrik</td><td>Gerak</td></tr>
+   <tr><td>♨️ Setrika</td><td>Listrik</td><td>Panas</td></tr>
+   <tr><td>📻 Radio</td><td>Listrik</td><td>Bunyi</td></tr>
+   <tr><td>🔦 Senter</td><td>Kimia (baterai) ➜ listrik</td><td>Cahaya</td></tr>
+   <tr><td>🍳 Kompor gas</td><td>Kimia (gas)</td><td>Panas dan cahaya</td></tr>
+   <tr><td>☀️ Panel surya</td><td>Cahaya matahari</td><td>Listrik</td></tr>
+   <tr><td>🚲 Dinamo sepeda</td><td>Gerak</td><td>Listrik ➜ cahaya lampu</td></tr>
+   <tr><td>🧒 Tubuh kita</td><td>Kimia (makanan)</td><td>Gerak dan panas</td></tr></table>`,
+   q: 'Pikirkan: benda apa di rumahmu yang mengubah listrik jadi bunyi?'},
+  {t: 'Rantai perubahan energi', ill: '<div class="chain"><span class="en">☀️ Matahari</span>➜<span class="en">🌱 Tumbuhan</span>➜<span class="en">🍚 Makanan</span>➜<span class="en">🏃 Gerak tubuh</span></div>',
+   b: 'Satu perubahan sering memicu perubahan lain. Matahari memberi energi cahaya. Tumbuhan mengubahnya menjadi <strong>energi kimia</strong> (makanan). Kita makan, lalu tubuh mengubahnya menjadi <strong>energi gerak</strong> saat berlari.',
+   q: 'Pikirkan: dari mana sebenarnya energi dalam nasi yang kamu makan?'},
+  {t: 'Manfaat perubahan energi', ill: '<span style="font-size:3.5em">☀️🔌🍳🚲</span>',
+   b: 'Perubahan energi membantu hidup kita: panel surya menerangi lampu jalan, kompor memasak makanan, kipas membuat sejuk, dinamo sepeda menyalakan lampu. Tapi hati-hati: lampu yang menyala tanpa dipakai membuang energi. <strong>Mari hemat energi!</strong><br><br>🤖 <em>Kesimpulan Robi: energi tidak hilang. Energi berubah bentuk, dan perubahan itu bermanfaat kalau kita memakainya dengan bijak.</em>',
+   q: 'Pikirkan: bagaimana caramu menghemat energi di rumah?'}
+];
+let mi = 0;
+actions.materi = () => { mi = 0; materi(); };
+function materi(){
+  cur = 'materi';
+  const m = MATERI[mi], last = mi === MATERI.length - 1;
+  if (last) S.materi = true;
+  view(`<h1>Materi ${mi + 1} dari ${MATERI.length}: ${m.t}</h1>
+    <div class="dots" aria-hidden="true">${MATERI.map((_, i) => `<i class="${i <= mi ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="card" style="margin-top:12px"><div class="center">${m.ill}</div><p>${m.b}</p></div>
+    ${robiSay('🤔 ' + m.q, 'berpikir')}
+    <p class="row" style="margin-top:16px">
+      <button class="btn ghost" data-a="mPrev" ${mi === 0 ? 'disabled' : ''}>◀ Sebelumnya</button>
+      ${last ? '<button class="btn blue" data-a="menu">Selesai Membaca ✔</button>' : '<button class="btn" data-a="mNext">Berikutnya ▶</button>'}
+    </p>`, 'Baca kartu materi, lalu tekan Berikutnya. Di kartu terakhir tekan Selesai Membaca untuk membuka Misi 1.', 'Materi ' + (mi + 1));
+}
+actions.mNext = () => { if (mi < MATERI.length - 1) mi++; materi(); };
+actions.mPrev = () => { if (mi > 0) mi--; materi(); };
+
+/* ---------- Rekap poin (P8) ---------- */
+function finishMisi(k, pts, max, force){
+  const r = pts / max;
+  let stars = r >= 1 ? 3 : r >= .8 ? 2 : r >= .6 ? 1 : 0;
+  if (force === true && stars === 0) stars = 1;
+  if (force === false) stars = 0;
+  const pass = stars > 0;
+  S.misi[k] = {pts, max, stars, pass};
+  if (pass && !S.badges.includes(MISI[k].badge)) S.badges.push(MISI[k].badge);
+  pass ? sfx.win() : sfx.no();
+  rekap(k);
+}
+function rekap(k){
+  cur = 'rekap';
+  const r = S.misi[k], m = MISI[k];
+  view(`<h1>Rekap Misi ${k.slice(1)}: ${m.n}</h1>
+    <div class="card center">
+      <div style="font-size:3em" aria-label="${r.stars} bintang">${r.pass ? '⭐'.repeat(r.stars) : '☆☆☆'}</div>
+      <h2>${r.pts} dari ${r.max} poin</h2>
+      ${r.pass ? `<p>Lencana baru: <strong>🏅 ${m.badge}</strong></p>` : '<p>Skor belum cukup untuk membuka misi berikutnya.</p>'}
+    </div>
+    ${robiSay(r.pass ? 'Hebat! Kotaku makin terang! 💡' : 'Sedikit lagi! Ayo coba lagi, kamu pasti bisa.', r.pass ? 'semangat' : 'sedih')}
+    <p class="row">
+      ${r.pass ? '<button class="btn blue" data-a="menu">Lanjut ke Menu ▶</button>' : ''}
+      <button class="btn" data-a="open" data-v="${k}" ${'' }>🔁 Main Lagi Misi Ini</button>
+      ${r.pass ? '' : '<button class="btn ghost" data-a="menu">Menu</button>'}
+    </p>`, 'Lihat bintang dan poinmu. Jika lulus, lanjut ke menu.', 'Rekap misi');
+}
+
+/* ==========================================================
+   MISI 1: DETEKTIF ENERGI
+   ========================================================== */
+const OBJ = [
+  {id: 'lampu', e: '💡', n: 'Lampu', i: 'listrik', o: 'cahaya', h: 'Lampu dipasang ke listrik lalu menjadi terang.'},
+  {id: 'kipas', e: '🌬️', n: 'Kipas angin', i: 'listrik', o: 'gerak', h: 'Baling-baling kipas berputar. Itu energi apa?'},
+  {id: 'setrika', e: '♨️', n: 'Setrika', i: 'listrik', o: 'panas', h: 'Dekatkan tangan ke setrika menyala. Terasa apa?'},
+  {id: 'radio', e: '📻', n: 'Radio', i: 'listrik', o: 'bunyi', h: 'Radio mengeluarkan suara. Itu energi apa?'},
+  {id: 'kompor', e: '🍳', n: 'Kompor gas', i: 'kimia', o: 'panas', h: 'Gas adalah bahan bakar (energi kimia). Apinya terasa apa?'},
+  {id: 'senter', e: '🔦', n: 'Senter', i: 'kimia', o: 'cahaya', h: 'Baterai menyimpan energi kimia. Senter menghasilkan apa?'},
+  {id: 'surya', e: '☀️', n: 'Panel surya', i: 'cahaya', o: 'listrik', h: 'Panel surya menangkap sinar matahari. Hasilnya dipakai menyalakan lampu.'},
+  {id: 'dinamo', e: '🚲', n: 'Dinamo sepeda', i: 'gerak', o: 'listrik', h: 'Roda berputar (gerak) membuat lampu sepeda menyala lewat apa?'}
+];
+let M1 = null;
+function misi1(){
+  M1 = {done: {}, pts: 0};
+  m1View();
+}
+function m1View(){
+  cur = 'm1';
+  const n = Object.keys(M1.done).length;
+  view(`<h1>Misi 1: Detektif Energi 🔎</h1>
+    <p>Klik benda di rumah. Tebak <strong>energi masuk</strong> dan <strong>energi keluar</strong>-nya! (${n} dari 8 selesai)</p>
+    <div class="prog" aria-hidden="true"><i style="width:${n / 8 * 100}%"></i></div>
+    <div class="items">${OBJ.map(o => {
+      const d = M1.done[o.id];
+      return `<button class="item ${d ? (d.ok ? 'ok' : 'miss') : ''}" data-a="m1pick" data-v="${o.id}" ${d ? 'aria-disabled="true"' : ''}>
+        <span class="em" aria-hidden="true">${o.e}</span>${o.n}
+        <small>${d ? (d.ok ? '✔ ' : '✖ ') + EN[o.i].n + ' ➜ ' + EN[o.o].n : 'Klik untuk menyelidiki'}</small></button>`;
+    }).join('')}</div>
+    ${robiSay('Klik benda di rumah dan selidiki! Kamu butuh minimal 6 jawaban benar untuk lulus.', 'senang')}`,
+    'Klik satu benda. Pilih energi masuk dan energi keluar, lalu tekan Cek. Jika salah, Robi memberi petunjuk.', 'Misi 1 Detektif Energi');
+}
+actions.m1pick = b => {
+  const o = OBJ.find(x => x.id === b.dataset.v); if (M1.done[o.id]) return;
+  let inn = null, out = null, tries = 0;
+  const c = openModal(`<h2><span aria-hidden="true">${o.e}</span> ${o.n}</h2>
+    <p><strong>Energi apa yang MASUK?</strong></p><div class="pick" id="pIn">${Object.keys(EN).map(k => `<button class="${k}" data-k="${k}" aria-pressed="false">${EN[k].i} ${EN[k].n}</button>`).join('')}</div>
+    <p><strong>Energi apa yang KELUAR?</strong></p><div class="pick" id="pOut">${Object.keys(EN).map(k => `<button class="${k}" data-k="${k}" aria-pressed="false">${EN[k].i} ${EN[k].n}</button>`).join('')}</div>
+    <div id="fb" role="status"></div>
+    <p class="row"><button class="btn" id="cek">Cek Jawaban</button><button class="btn ghost" data-a="close">Tutup</button></p>`);
+  const bind = (id, set) => c.querySelectorAll('#' + id + ' button').forEach(x => x.onclick = () => {
+    c.querySelectorAll('#' + id + ' button').forEach(y => y.setAttribute('aria-pressed', 'false'));
+    x.setAttribute('aria-pressed', 'true'); set(x.dataset.k); sfx.click();
+  });
+  bind('pIn', k => inn = k); bind('pOut', k => out = k);
+  c.querySelector('#cek').onclick = () => {
+    const fb = c.querySelector('#fb');
+    if (!inn || !out){ fb.innerHTML = '<div class="fb no">Pilih energi masuk dan energi keluar dulu ya.</div>'; return; }
+    if (inn === o.i && out === o.o){
+      const p = tries === 0 ? 10 : 5; M1.pts += p; M1.done[o.id] = {ok: true, p}; sfx.ok();
+      fb.innerHTML = `<div class="fb ok">Tepat sekali! ${EN[o.i].n} berubah menjadi ${EN[o.o].n}. +${p} poin 🎉</div>`;
+      setTimeout(() => { closeModal(); m1Next(); }, 1500);
+    } else {
+      tries++; sfx.no();
+      if (tries === 1) fb.innerHTML = `<div class="fb no">Hampir! 💭 ${o.h} Coba lagi.</div>`;
+      else {
+        M1.done[o.id] = {ok: false, p: 0};
+        fb.innerHTML = `<div class="fb no">Jawabannya: ${EN[o.i].n} ➜ ${EN[o.o].n}. Ingat ya, nanti kita coba lagi!</div>`;
+        setTimeout(() => { closeModal(); m1Next(); }, 2200);
+      }
+    }
+    say(fb.textContent);
+  };
+};
+function m1Next(){
+  if (Object.keys(M1.done).length < OBJ.length) return m1View();
+  const okN = Object.values(M1.done).filter(d => d.ok).length;
+  finishMisi('m1', M1.pts, 80, okN >= 6);   /* lulus jika minimal 6 dari 8 benar */
+}
+
+/* ==========================================================
+   MISI 2: LAB MESIN PENGUBAH ENERGI (simulasi)
+   ========================================================== */
+const SRC = [
+  {id: 'baterai', e: '🔋', n: 'Baterai', i: 'kimia'},
+  {id: 'surya', e: '☀️', n: 'Matahari + panel surya', i: 'cahaya'},
+  {id: 'dinamo', e: '🚲', n: 'Dinamo diputar', i: 'gerak'},
+  {id: 'gas', e: '🛢️', n: 'Tabung gas', i: 'kimia'}
+];
+const TOOL = [
+  {id: 'lampu', e: '💡', n: 'Lampu'}, {id: 'kipas', e: '🌬️', n: 'Kipas'}, {id: 'speaker', e: '🔊', n: 'Speaker'},
+  {id: 'pemanas', e: '♨️', n: 'Pemanas'}, {id: 'kompor', e: '🍳', n: 'Kompor'}
+];
+function labRule(s, t){
+  if (s === 'gas') return t === 'kompor' ? ['panas', 'cahaya'] : null;
+  if (t === 'kompor') return null;
+  return {lampu: ['cahaya', 'panas'], kipas: ['gerak'], speaker: ['bunyi'], pemanas: ['panas']}[t];
+}
+let M2 = null;
+function misi2(){ M2 = {s: null, t: null, found: [], pts: 0, res: null, kes: false}; m2View(); }
+function m2View(){
+  cur = 'm2';
+  const nf = M2.found.length;
+  const res = M2.res;
+  let out = '';
+  if (res){
+    if (res.bad) out = `<div class="fb no">Alat ini tidak cocok dengan sumber energi itu. Coba pasangan lain! 🔧</div>`;
+    else {
+      const s = SRC.find(x => x.id === M2.s), t = TOOL.find(x => x.id === M2.t);
+      const mid = s.id === 'gas' ? '' : `<span class="arrow">➜</span>${enChip('listrik')}`;
+      out = `<div class="card" style="margin-top:10px"><div class="chain" aria-label="Hasil percobaan">
+        ${enChip(s.i)}${mid}<span class="arrow">➜</span><span class="en">${t.e} ${t.n}</span><span class="arrow">➜</span>${res.outs.map(enChip).join(' + ')}</div>
+        <div class="center" style="font-size:3em">${t.id === 'kipas' ? '<span class="spin">🌬️</span>' : t.id === 'lampu' ? '<span class="glow">💡</span>' : t.id === 'speaker' ? '<span class="bounce">🔊</span>' : '<span class="bounce">🔥</span>'}</div>
+        <p class="muted">${res.isNew ? '+15 poin untuk percobaan baru!' : 'Percobaan ini sudah pernah dicatat.'}</p></div>`;
+    }
+  }
+  const tabel = M2.found.length ? `<table><tr><th>Energi masuk</th><th>Alat</th><th>Energi keluar</th></tr>${M2.found.map(f => `<tr><td>${EN[f.i].n} (${f.sn})</td><td>${f.tn}</td><td>${f.outs.map(o => EN[o].n).join(' + ')}</td></tr>`).join('')}</table>` : '';
+  view(`<h1>Misi 2: Lab Mesin Pengubah Energi 🔬</h1>
+    <p>Pilih <strong>sumber energi</strong>, pilih <strong>alat</strong>, lalu tekan <strong>ON</strong>. Lakukan minimal 3 percobaan berbeda. (${Math.min(nf, 3)} dari 3)</p>
+    <div class="row">
+      <div class="card grow"><h3>1. Sumber energi</h3><div class="pick">${SRC.map(s => `<button data-a="m2s" data-v="${s.id}" aria-pressed="${M2.s === s.id}">${s.e} ${s.n}</button>`).join('')}</div></div>
+      <div class="card grow"><h3>2. Alat</h3><div class="pick">${TOOL.map(t => `<button data-a="m2t" data-v="${t.id}" aria-pressed="${M2.t === t.id}">${t.e} ${t.n}</button>`).join('')}</div></div>
+    </div>
+    <p class="center"><button class="btn blue" style="font-size:1.3em" data-a="m2on">▶ ON</button></p>
+    ${out}${tabel ? '<h3>Tabel hasil percobaanmu</h3>' + tabel : ''}
+    ${nf >= 3 && !M2.kes ? `<div class="card" style="margin-top:14px"><h3>Kesimpulan 🧠</h3><p>Dari semua percobaanmu, apa yang terjadi pada energi?</p>
+      <div class="opts">${['Energi hilang setelah dipakai.', 'Energi berubah bentuk.', 'Energi hanya diam di tempatnya.'].map((t, i) => `<button data-a="m2k" data-v="${i}"><span class="k">${'ABC'[i]}</span>${t}</button>`).join('')}</div><div id="kfb" role="status"></div></div>` : ''}
+    ${robiSay(nf < 3 ? 'Coba sumber dan alat yang berbeda. Perhatikan energi yang masuk dan energi yang keluar!' : M2.kes ? 'Kesimpulanmu tepat! Siap menyelesaikan misi?' : 'Kamu sudah mencoba 3 kali. Sekarang tarik kesimpulan!', 'berpikir')}
+    ${M2.kes ? '<p><button class="btn blue" data-a="m2end">Selesaikan Misi ✔</button></p>' : ''}`,
+    'Pilih satu sumber energi dan satu alat, lalu tekan ON. Kompor hanya cocok dengan tabung gas. Setelah 3 percobaan berbeda, jawab kesimpulan.', 'Misi 2 Lab');
+}
+actions.m2s = b => { M2.s = b.dataset.v; M2.res = null; m2View(); };
+actions.m2t = b => { M2.t = b.dataset.v; M2.res = null; m2View(); };
+actions.m2on = () => {
+  if (!M2.s || !M2.t){ toast('Pilih sumber energi dan alat dulu!'); sfx.no(); return; }
+  const outs = labRule(M2.s, M2.t);
+  if (!outs){ M2.res = {bad: true}; sfx.no(); m2View(); return; }
+  const key = M2.s + '-' + M2.t, isNew = !M2.found.some(f => f.key === key);
+  const s = SRC.find(x => x.id === M2.s), t = TOOL.find(x => x.id === M2.t);
+  if (isNew){ M2.found.push({key, i: s.i, sn: s.n, tn: t.n, outs}); if (M2.found.length <= 3) M2.pts += 15; }
+  M2.res = {outs, isNew}; sfx.ok(); m2View();
+  say(`${s.n} ke ${t.n} menghasilkan ${outs.map(o => EN[o].n).join(' dan ')}`);
+};
+actions.m2k = b => {
+  const ok = b.dataset.v === '1';
+  if (ok){ M2.pts += M2.tryk ? 8 : 15; M2.kes = true; sfx.ok(); m2View(); }
+  else { M2.tryk = true; sfx.no(); const f = $('#kfb'); f.innerHTML = '<div class="fb no">Hampir! 💭 Lihat tabelmu: energi masuk selalu menjadi energi keluar. Coba lagi.</div>'; say(f.textContent); }
+};
+actions.m2end = () => finishMisi('m2', M2.pts, 60);
+
+/* ==========================================================
+   MISI 3: RANTAI ENERGI
+   ========================================================== */
+const LV3 = [
+  {t: 'Rantai dari Matahari', c: ['☀️ Matahari (cahaya)', '🌱 Tumbuhan (energi kimia)', '🍚 Makanan', '🏃 Gerak tubuh'], h: 'Mulailah dari sumber energi terbesar di bumi.'},
+  {t: 'Rantai Senter', c: ['🔋 Baterai (energi kimia)', '⚡ Energi listrik', '🔦 Senter menyala (cahaya)'], h: 'Baterai menyimpan energi kimia lebih dulu.'},
+  {t: 'Rantai Motor', c: ['⛽ Bensin (energi kimia)', '🏍️ Mesin motor', '🛵 Motor melaju (gerak)'], h: 'Bahan bakar dipakai oleh mesin untuk bergerak.'}
+];
+let M3 = null;
+function misi3(){ M3 = {lv: 0, placed: [], pts: 0, tries: 0, chk: null, order: shuffle([0, 1, 2, 3, 4].slice(0, 4))}; m3Init(); m3View(); }
+function m3Init(){ const n = LV3[M3.lv].c.length; M3.placed = []; M3.tries = 0; M3.chk = null; M3.order = shuffle([...Array(n).keys()]); }
+function m3View(){
+  cur = 'm3';
+  const L = LV3[M3.lv], n = L.c.length;
+  const slots = [...Array(n).keys()].map(i => {
+    const p = M3.placed[i], st = M3.chk ? (M3.chk[i] ? 'good' : 'bad') : '';
+    return p === undefined ? `<div class="slot"><span class="no">Gerbong ${i + 1}</span>kosong</div>`
+      : `<button class="slot filled ${st}" data-a="m3rm" data-v="${i}" aria-label="Gerbong ${i + 1}: ${L.c[p]}. Klik untuk mengeluarkan"><span class="no">Gerbong ${i + 1}</span>${L.c[p]}</button>`;
+  }).join('');
+  const avail = M3.order.filter(i => !M3.placed.includes(i));
+  view(`<h1>Misi 3: Rantai Energi 🚂</h1>
+    <h2>Level ${M3.lv + 1} dari 3: ${L.t}</h2>
+    <p>Klik kartu untuk memasukkannya ke gerbong berurutan dari kiri. Klik gerbong untuk mengeluarkan kartu.</p>
+    <div class="slots" role="list">${slots}</div>
+    <div class="cards" aria-label="Kartu energi">${avail.map(i => `<button data-a="m3add" data-v="${i}">${L.c[i]}</button>`).join('')}</div>
+    <p><button class="btn blue" data-a="m3cek" ${M3.placed.length < n ? 'aria-disabled="true"' : ''}>Cek Rantai ✔</button></p>
+    <div id="m3fb" role="status"></div>
+    ${robiSay('Urutkan dari awal sampai akhir. Energi selalu mengalir satu arah!', 'berpikir')}`,
+    'Klik kartu untuk mengisi gerbong dari kiri ke kanan. Klik gerbong untuk membatalkan. Tekan Cek Rantai kalau semua gerbong terisi.', 'Misi 3 Rantai Energi');
+}
+actions.m3add = b => { M3.placed.push(+b.dataset.v); M3.chk = null; m3View(); };
+actions.m3rm = b => { M3.placed.splice(+b.dataset.v, 1); M3.chk = null; m3View(); };
+actions.m3cek = () => {
+  const L = LV3[M3.lv], n = L.c.length;
+  if (M3.placed.length < n){ toast('Isi semua gerbong dulu ya!'); return; }
+  const chk = M3.placed.map((p, i) => p === i);
+  if (chk.every(Boolean)){
+    const p = M3.tries === 0 ? 20 : 10; M3.pts += p; sfx.ok();
+    M3.chk = chk; m3View();
+    const fb = $('#m3fb'); fb.innerHTML = `<div class="fb ok">Rantai benar! 🚂 Kereta melaju! +${p} poin</div>
+      <button class="btn blue" data-a="m3next">${M3.lv < 2 ? 'Level Berikutnya ▶' : 'Selesaikan Misi ✔'}</button>`;
+    say('Rantai benar'); $('[data-a="m3next"]').focus();
+  } else {
+    M3.tries++; M3.chk = chk; sfx.no(); m3View();
+    const first = chk.findIndex(x => !x);
+    $('#m3fb').innerHTML = `<div class="fb no">Gerbong ${first + 1} belum tepat. 💭 ${L.h}</div>`;
+    say('Gerbong ' + (first + 1) + ' belum tepat');
+  }
+};
+actions.m3next = () => {
+  if (M3.lv < 2){ M3.lv++; m3Init(); m3View(); } else finishMisi('m3', M3.pts, 60);
+};
+
+/* ==========================================================
+   MISI 4: MANFAAT DAN DAMPAK
+   ========================================================== */
+const KARTU4 = [
+  {e: '☀️', t: 'Panel surya mengisi lampu jalan', m: true, why: 'Cahaya matahari berubah menjadi listrik untuk lampu jalan: manfaat besar.'},
+  {e: '🍳', t: 'Kompor gas dipakai memasak makanan', m: true, why: 'Energi kimia gas menjadi panas untuk memasak.'},
+  {e: '💡', t: 'Lampu dibiarkan menyala di siang hari', m: false, why: 'Listrik terbuang jadi cahaya yang tidak dibutuhkan. Matikan, ya!'},
+  {e: '♨️', t: 'Setrika lupa dicabut setelah dipakai', m: false, why: 'Listrik terus berubah jadi panas dan bisa berbahaya.'},
+  {e: '🚲', t: 'Dinamo sepeda menyalakan lampu', m: true, why: 'Gerak roda berubah menjadi listrik untuk lampu sepeda.'},
+  {e: '📺', t: 'TV menyala tetapi tidak ditonton', m: false, why: 'Listrik terbuang menjadi cahaya dan bunyi yang tidak dipakai.'},
+  {e: '🌬️', t: 'Kipas menyejukkan ruangan yang ramai', m: true, why: 'Listrik berubah menjadi gerak sehingga ruangan terasa sejuk.'},
+  {e: '🔌', t: 'Kipas dibiarkan menyala di kamar kosong', m: false, why: 'Listrik terbuang tanpa ada yang merasakan manfaatnya.'}
+];
+let M4 = null;
+function misi4(){ M4 = {i: 0, pts: 0, stage: 'kartu', fb: null, ord: shuffle([...Array(KARTU4.length).keys()]), tryq: false}; m4View(); }
+function m4View(){
+  cur = 'm4';
+  if (M4.stage === 'kartu'){
+    const k = KARTU4[M4.ord[M4.i]];
+    view(`<h1>Misi 4: Manfaat dan Dampak 🌳</h1>
+      <p>Kartu ${M4.i + 1} dari ${KARTU4.length}. Masukkan ke keranjang yang tepat.</p>
+      <div class="prog" aria-hidden="true"><i style="width:${M4.i / KARTU4.length * 100}%"></i></div>
+      <div class="card center" style="max-width:640px;margin:10px auto"><div style="font-size:4em" aria-hidden="true">${k.e}</div><h2>${k.t}</h2></div>
+      ${M4.fb ? `<div class="fb ${M4.fb.ok ? 'ok' : 'no'} center" role="status">${M4.fb.ok ? '✔ Benar! ' : '✖ Belum tepat. '}${k.why}</div>
+        <p class="center"><button class="btn blue" data-a="m4next">Kartu Berikutnya ▶</button></p>` :
+      `<div class="row" style="justify-content:center">
+        <button class="btn" style="background:#8fe388" data-a="m4ans" data-v="1">👍 Manfaat</button>
+        <button class="btn" style="background:#ffa24a" data-a="m4ans" data-v="0">⚠️ Perlu Hemat / Hati-hati</button></div>`}
+      ${robiSay('Pikirkan: apakah energi ini dipakai dengan baik atau terbuang?', 'berpikir')}`,
+      'Baca kartu, lalu pilih Manfaat atau Perlu Hemat/Hati-hati. Setiap jawaban benar 5 poin.', 'Misi 4 Manfaat dan Dampak');
+  } else {
+    view(`<h1>Misi 4: Pertanyaan Penalaran 🧠</h1>
+      <div class="card"><h2>Bagaimana cara kita memakai energi dengan bijak?</h2>
+      <div class="opts">${['Menyalakan semua lampu supaya rumah selalu terang.', 'Mematikan lampu dan alat listrik yang sedang tidak dipakai.', 'Membiarkan kipas menyala saat kamar kosong.'].map((t, i) => `<button data-a="m4q" data-v="${i}"><span class="k">${'ABC'[i]}</span>${t}</button>`).join('')}</div>
+      <div id="m4fb" role="status"></div></div>
+      ${robiSay('Ini pertanyaan terakhir Misi 4. Gunakan yang kamu pelajari!', 'semangat')}`,
+      'Pilih satu jawaban yang menunjukkan cara memakai energi dengan bijak.', 'Pertanyaan penalaran');
+  }
+}
+actions.m4ans = b => {
+  const k = KARTU4[M4.ord[M4.i]], ok = (b.dataset.v === '1') === k.m;
+  if (ok){ M4.pts += 5; sfx.ok(); } else sfx.no();
+  M4.fb = {ok}; m4View(); say((ok ? 'Benar. ' : 'Belum tepat. ') + k.why);
+  const n = $('[data-a="m4next"]'); if (n) n.focus();
+};
+actions.m4next = () => { M4.fb = null; if (M4.i < KARTU4.length - 1) M4.i++; else M4.stage = 'tanya'; m4View(); };
+actions.m4q = b => {
+  if (b.dataset.v === '1'){ M4.pts += M4.tryq ? 5 : 10; sfx.ok(); finishMisi('m4', M4.pts, 50); }
+  else { M4.tryq = true; sfx.no(); $('#m4fb').innerHTML = '<div class="fb no">Hampir! 💭 Ingat, energi yang terbuang itu sia-sia. Coba lagi.</div>'; say('Coba lagi'); }
+};
+
+/* ==========================================================
+   MISI 5: JELAJAH AR (AR-Lite, pengayaan)
+   ========================================================== */
+const AR = [
+  {id: 'kipas', e: '🌬️', t: 'Kipas angin: energi listrik ➜ energi gerak.', pos: 'left:8%;top:14%'},
+  {id: 'lampu', e: '💡', t: 'Lampu: energi listrik ➜ energi cahaya (dan sedikit panas).', pos: 'left:42%;top:42%'},
+  {id: 'surya', e: '☀️', t: 'Panel surya: energi cahaya matahari ➜ energi listrik.', pos: 'right:8%;top:16%'}
+];
+let M5 = null;
+function misi5(){ M5 = {found: [], cam: false}; m5View(); }
+function m5View(label){
+  cur = 'm5';
+  view(`<h1>Misi 5: Jelajah AR 📡 <small style="font-size:.6em">(pengayaan)</small></h1>
+    <p>Nyalakan kamera lalu ketuk benda yang melayang untuk melihat perubahan energinya. Tanpa kamera pun bisa. (${M5.found.length} dari 3 ditemukan)</p>
+    <div class="ar" id="ar">
+      <video id="cam" autoplay playsinline muted aria-hidden="true" style="display:none"></video>
+      ${AR.map(a => `<button class="floater" style="${a.pos}" data-a="m5tap" data-v="${a.id}" aria-label="Benda ${a.id}">${a.e}</button>`).join('')}
+      <div class="label" id="arl" role="status">${label || 'Ketuk benda yang melayang!'}</div>
+    </div>
+    <p class="row" style="margin-top:12px">
+      <button class="btn blue" data-a="m5cam">📷 Nyalakan Kamera</button>
+      <button class="btn" data-a="m5end">Selesai Misi ✔</button></p>
+    ${robiSay('Ini mode AR-Lite: benda 3D-ku melayang di atas pandangan kameramu. Kalau kamera tidak ada, tetap seru kok!', 'semangat')}`,
+    'Tekan Nyalakan Kamera (boleh dilewati). Ketuk tiga benda untuk membaca perubahan energinya. Tekan Selesai Misi kalau sudah.', 'Misi 5 Jelajah AR');
+}
+actions.m5cam = async () => {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
+    const v = $('#cam'); v.srcObject = camStream; v.style.display = 'block'; M5.cam = true;
+    $('#arl').textContent = 'Kamera menyala! Ketuk benda yang melayang.';
+  } catch (e){ toast('Kamera tidak tersedia. Lanjut tanpa kamera ya!'); }
+};
+actions.m5tap = b => {
+  const a = AR.find(x => x.id === b.dataset.v);
+  if (!M5.found.includes(a.id)) { M5.found.push(a.id); sfx.ok(); }
+  $('#arl').innerHTML = a.t + ` <small>(${M5.found.length}/3)</small>`; say(a.t);
+};
+actions.m5end = () => finishMisi('m5', Math.min(20, M5.found.length * 7), 20);
+
+/* ==========================================================
+   KUIS FORMATIF (5 soal, umpan balik instan)
+   ========================================================== */
+const FORM = [
+  {q: 'Lampu menyala. Energi apa yang keluar dari lampu?', o: ['Cahaya (dan sedikit panas)', 'Bunyi', 'Gerak', 'Energi kimia'], a: 0, h: 'Lampu membuat ruangan menjadi terang.', ex: 'Lampu mengubah listrik menjadi cahaya.'},
+  {q: 'Listrik masuk ke blender. Energi yang keluar adalah ...', o: ['Gerak', 'Cahaya', 'Kimia', 'Tidak ada'], a: 0, h: 'Pisau blender berputar.', ex: 'Blender mengubah listrik menjadi gerak.'},
+  {q: 'Radio mengubah energi listrik menjadi energi ...', o: ['panas', 'bunyi', 'gerak', 'cahaya'], a: 1, h: 'Radio bisa kamu dengar.', ex: 'Radio mengubah listrik menjadi bunyi.'},
+  {q: 'Urutan rantai energi yang benar adalah ...', o: ['Matahari, tumbuhan, makanan, gerak tubuh', 'Makanan, matahari, gerak tubuh, tumbuhan', 'Gerak tubuh, tumbuhan, matahari, makanan'], a: 0, h: 'Energi mengalir mulai dari matahari.', ex: 'Matahari memberi cahaya, tumbuhan membuat makanan, tubuh bergerak.'},
+  {q: 'Benar atau salah: energi hilang setelah dipakai.', o: ['Benar', 'Salah'], a: 1, h: 'Ingat kesimpulan Robi tentang energi.', ex: 'Energi tidak hilang, hanya berubah bentuk.'}
+];
+let F = null;
+function formatif(){ F = {i: 0, tr: 0, fb: null, ok: 0}; fView(); }
+function fView(){
+  cur = 'formatif';
+  const q = FORM[F.i];
+  view(`<h1>Kuis Formatif 📝</h1><p>Soal ${F.i + 1} dari ${FORM.length}. Kuis ini membantu kamu berlatih, tidak menentukan kelulusan.</p>
+    <div class="prog" aria-hidden="true"><i style="width:${F.i / FORM.length * 100}%"></i></div>
+    <div class="card"><h2>${q.q}</h2>
+      <div class="opts">${q.o.map((t, i) => `<button data-a="fans" data-v="${i}" class="${F.fb && F.fb.done ? (i === q.a ? 'right' : '') : ''}" ${F.fb && F.fb.done ? 'aria-disabled="true"' : ''}><span class="k">${'ABCD'[i]}</span>${t}</button>`).join('')}</div>
+      ${F.fb ? `<div class="fb ${F.fb.ok ? 'ok' : 'no'}" role="status">${F.fb.msg}</div>` : ''}
+      ${F.fb && F.fb.done ? `<button class="btn blue" data-a="fnext">${F.i < FORM.length - 1 ? 'Soal Berikutnya ▶' : 'Selesai ▶'}</button>` : ''}
+    </div>${robiSay('Jawab dengan tenang. Kalau salah, aku kasih petunjuk!', 'senang')}`,
+    'Pilih satu jawaban. Jika salah, ada petunjuk dan satu kesempatan lagi.', 'Kuis formatif');
+}
+actions.fans = b => {
+  const q = FORM[F.i], v = +b.dataset.v;
+  if (v === q.a){ F.fb = {ok: true, done: true, msg: '⭐ Benar! ' + q.ex}; F.ok++; sfx.ok(); }
+  else if (F.tr === 0){ F.tr = 1; F.fb = {ok: false, done: false, msg: '💭 Hampir! ' + q.h + ' Coba lagi.'}; sfx.no(); }
+  else { F.fb = {ok: false, done: true, msg: 'Jawabannya: ' + q.o[q.a] + '. ' + q.ex}; sfx.no(); }
+  fView(); say(F.fb.msg);
+  const n = $('[data-a="fnext"]'); if (n) n.focus();
+};
+actions.fnext = () => {
+  F.tr = 0; F.fb = null;
+  if (F.i < FORM.length - 1){ F.i++; fView(); return; }
+  view(`<h1>Kuis Formatif Selesai! 🎉</h1><div class="card center"><div class="score">${F.ok}/5</div><p>jawaban benar pada percobaan pertama atau kedua</p></div>
+    ${robiSay('Bagus! Sekarang saatnya Asesmen Akhir. Di sana aku tidak memberi tahu benar atau salah sampai semua soal selesai. Kamu pasti bisa!', 'semangat')}
+    <p class="row"><button class="btn blue" data-a="asesmen">🏁 Mulai Asesmen Akhir</button><button class="btn ghost" data-a="menu">Menu</button></p>`,
+    'Kuis selesai. Lanjut ke asesmen akhir atau kembali ke menu.', 'Kuis formatif selesai');
+};
+
+/* ==========================================================
+   ASESMEN AKHIR (10 soal pilihan ganda, umpan balik di akhir)
+   ========================================================== */
+const ASES = [
+  {q: 'Saat lampu menyala, energi listrik terutama berubah menjadi ...', o: ['gerak', 'cahaya', 'bunyi', 'kimia'], a: 1, ex: 'Lampu mengubah listrik menjadi cahaya (dan sedikit panas).'},
+  {q: 'Kipas angin berputar. Perubahan energi yang terjadi adalah ...', o: ['listrik menjadi panas', 'listrik menjadi bunyi', 'listrik menjadi gerak', 'gerak menjadi listrik'], a: 2, ex: 'Kipas butuh listrik untuk memutar baling-baling, jadi listrik menjadi gerak.'},
+  {q: 'Setrika terasa panas setelah dihubungkan ke listrik. Energi yang berubah adalah ...', o: ['listrik menjadi panas', 'listrik menjadi cahaya', 'panas menjadi listrik', 'gerak menjadi panas'], a: 0, ex: 'Pemanas setrika mengubah listrik menjadi panas.'},
+  {q: 'Panel surya di atap sekolah mengubah ...', o: ['listrik menjadi cahaya', 'gerak menjadi listrik', 'panas menjadi bunyi', 'cahaya matahari menjadi listrik'], a: 3, ex: 'Panel surya menangkap cahaya matahari dan mengubahnya menjadi listrik.'},
+  {q: 'Lampu sepeda menyala saat roda berputar. Urutan perubahan energinya adalah ...', o: ['listrik, gerak, cahaya', 'gerak, listrik, cahaya', 'cahaya, listrik, gerak', 'panas, gerak, cahaya'], a: 1, ex: 'Roda berputar (gerak), dinamo mengubahnya menjadi listrik, lampu mengubahnya menjadi cahaya.'},
+  {q: 'Tumbuhan mengubah energi cahaya matahari menjadi ...', o: ['energi bunyi', 'energi gerak', 'energi kimia (makanan)', 'energi listrik'], a: 2, ex: 'Pada fotosintesis, cahaya matahari menjadi energi kimia pada makanan tumbuhan.'},
+  {q: 'Urutan rantai energi yang benar adalah ...', o: ['matahari, tumbuhan, makanan, gerak tubuh', 'tumbuhan, matahari, gerak tubuh, makanan', 'makanan, matahari, tumbuhan, gerak tubuh', 'gerak tubuh, makanan, tumbuhan, matahari'], a: 0, ex: 'Energi berasal dari matahari, ke tumbuhan, ke makanan, lalu ke gerak tubuh kita.'},
+  {q: 'Senter menyala memakai baterai. Perubahan energinya adalah ...', o: ['cahaya, listrik, kimia', 'listrik, kimia, cahaya', 'gerak, listrik, cahaya', 'kimia, listrik, cahaya'], a: 3, ex: 'Baterai menyimpan energi kimia, berubah menjadi listrik, lalu menjadi cahaya.'},
+  {q: 'Manfaat perubahan energi pada kompor gas adalah ...', o: ['membuat ruangan dingin', 'memasak makanan', 'memutar roda', 'membuat bunyi nyaring'], a: 1, ex: 'Energi kimia gas berubah menjadi panas yang dipakai memasak.'},
+  {q: 'Pernyataan yang benar tentang energi adalah ...', o: ['energi hilang setelah dipakai', 'energi hanya ada pada listrik', 'energi tidak hilang, hanya berubah bentuk', 'energi bisa muncul dari tidak ada'], a: 2, ex: 'Energi tidak hilang, hanya berubah bentuk.'}
+];
+let A = null;
+function asesmenIntro(){
+  cur = 'asesIntro';
+  view(`<h1>Asesmen Akhir 🏁</h1>
+    <div class="card"><ul><li>10 soal pilihan ganda, dikerjakan sendiri.</li><li>Nilai minimal <strong>80</strong> untuk lulus.</li><li>Benar atau salah baru ditunjukkan <strong>setelah semua soal dikirim</strong>.</li><li>Kamu boleh kembali ke soal sebelumnya sebelum mengirim.</li></ul></div>
+    ${robiSay('Tarik napas dalam-dalam. Kamu sudah belajar banyak. Semangat, Agen Energi!', 'semangat')}
+    <p class="row"><button class="btn blue" data-a="asStart">Mulai ▶</button><button class="btn ghost" data-a="menu">Kembali</button></p>`,
+    'Baca aturan lalu tekan Mulai.', 'Asesmen akhir');
+}
+actions.asStart = () => {
+  A = {i: 0, ans: Array(10).fill(null), ord: ASES.map(q => shuffle([0, 1, 2, 3].slice(0, q.o.length)))};
+  asView();
+};
+function asView(){
+  cur = 'ases';
+  const q = ASES[A.i], ord = A.ord[A.i];
+  view(`<h1>Asesmen Akhir: Soal ${A.i + 1} dari 10</h1>
+    <div class="prog" aria-hidden="true"><i style="width:${(A.i + 1) / 10 * 100}%"></i></div>
+    <div class="card"><h2>${q.q}</h2>
+      <div class="opts" role="group" aria-label="Pilihan jawaban">${ord.map((oi, pos) => `<button data-a="asPick" data-v="${oi}" aria-pressed="${A.ans[A.i] === oi}"><span class="k">${'ABCD'[pos]}</span>${q.o[oi]}</button>`).join('')}</div></div>
+    <p class="row" style="margin-top:14px">
+      <button class="btn ghost" data-a="asPrev" ${A.i === 0 ? 'disabled' : ''}>◀ Sebelumnya</button>
+      ${A.i < 9 ? '<button class="btn" data-a="asNext">Soal Berikutnya ▶</button>' : '<button class="btn blue" data-a="asSend">Kirim Jawaban ✔</button>'}
+    </p>
+    <div class="dots" aria-label="Soal terjawab">${A.ans.map((v, i) => `<i class="${v !== null ? 'on' : ''}" ${i === A.i ? 'style="outline:3px solid #2f7bff"' : ''}></i>`).join('')}</div>`,
+    'Pilih satu jawaban. Kamu boleh kembali ke soal sebelumnya. Di soal 10 tekan Kirim Jawaban.', 'Soal ' + (A.i + 1));
+}
+actions.asPick = b => { A.ans[A.i] = +b.dataset.v; asView(); const x = document.querySelector('[aria-pressed="true"][data-a="asPick"]'); if (x) x.focus(); };
+actions.asNext = () => { A.i++; asView(); };
+actions.asPrev = () => { A.i--; asView(); };
+actions.asSend = () => {
+  const un = A.ans.map((v, i) => v === null ? i + 1 : null).filter(Boolean);
+  if (un.length){
+    openModal(`<h2>Masih ada soal kosong</h2><p>Soal nomor: <strong>${un.join(', ')}</strong>. Kirim sekarang atau periksa dulu?</p>
+      <p class="row"><button class="btn" data-a="asGo" data-v="${un[0] - 1}">Periksa dulu</button><button class="btn blue" data-a="asFinal">Kirim saja</button></p>`);
+    return;
+  }
+  actions.asFinal();
+};
+actions.asGo = b => { closeModal(); A.i = +b.dataset.v; asView(); };
+actions.asFinal = () => { closeModal(); hasil(); };
+function hasil(){
+  cur = 'hasil';
+  const benar = ASES.filter((q, i) => A.ans[i] === q.a).length, nilai = benar * 10, lulus = nilai >= 80;
+  S.hasil = {nilai, lulus};
+  if (lulus && !S.badges.includes('Agen Energi')) S.badges.push('Agen Energi');
+  lulus ? sfx.win() : sfx.no();
+  const msg = nilai === 100 ? 'Sempurna! Kamu Agen Energi Super! 🌟' : nilai >= 80 ? 'Hebat! Kamu lulus dan Kota Energi menyala terang! 🏙️' : nilai >= 60 ? 'Sedikit lagi! Ayo ulang Misi 2 dan 3, lalu coba lagi.' : 'Tidak apa-apa, Agen. Mari belajar bersama lagi mulai dari Materi.';
+  const ulang = ['m2', 'm3'];
+  view(`<h1>Hasil Asesmen Akhir</h1>
+    <div class="card center">
+      <div class="score ${lulus ? 'pass' : 'fail'}">${nilai}</div>
+      <h2 class="${lulus ? 'pass' : 'fail'}">${lulus ? '✅ LULUS' : '❌ BELUM LULUS'}</h2>
+      <p>${benar} dari 10 soal benar. Syarat lulus: nilai minimal 80.</p>
+      ${lulus ? '<div style="font-size:2.4em" aria-hidden="true">🏆🎉🏙️</div><p><strong>Sertifikat:</strong> Agen Energi telah menyalakan Kota Energi!</p>' : ''}
+    </div>
+    ${robiSay(msg, lulus ? 'semangat' : 'senang')}
+    ${S.badges.length ? `<p><strong>Lencanamu:</strong> ${S.badges.map(b => '🏅 ' + b).join(' · ')}</p>` : ''}
+    ${lulus ? '' : `<p>Saran: ulangi ${ulang.map(k => 'Misi ' + k.slice(1) + ' (' + MISI[k].n + ')').join(' dan ')}, lalu coba asesmen lagi.</p>`}
+    <h2>Pembahasan</h2>
+    <table><tr><th>No</th><th>Jawabanmu</th><th>Kunci</th><th>Penjelasan</th></tr>
+    ${ASES.map((q, i) => { const ok = A.ans[i] === q.a; return `<tr class="${ok ? 'r-ok' : 'r-no'}"><td>${i + 1} ${ok ? '✔' : '✖'}</td><td>${A.ans[i] === null ? '(kosong)' : q.o[A.ans[i]]}</td><td>${q.o[q.a]}</td><td>${q.ex}</td></tr>`; }).join('')}</table>
+    <div class="card" style="margin-top:14px"><h3>🏅 Simpan ke Peringkat Kelas</h3>
+      <label for="nick">Nama julukan (bukan nama asli):</label><br>
+      <input id="nick" maxlength="16" style="font:inherit;padding:.3em .6em;border:4px solid #0b2a6f;border-radius:12px;max-width:100%">
+      <button class="btn" data-a="saveRank">Simpan</button></div>
+    <p class="row" style="margin-top:14px">
+      <button class="btn blue" data-a="asesmen">🔁 Ulangi Asesmen</button>
+      <button class="btn" data-a="menu">🏠 Menu</button>
+      <button class="btn ghost" data-a="reset">🎮 Main dari Awal</button>
+      <button class="btn ghost" data-a="exitFs">⛶ Keluar Layar Penuh</button></p>`,
+    'Lihat nilai dan pembahasan. Tekan Ulangi Asesmen jika belum lulus.', 'Hasil asesmen ' + nilai);
+}
+actions.exitFs = () => exitFullscreen();
+actions.reset = () => { S = blank(); menu(); };
+
+/* ---------- Peringkat kelas (disimpan lokal) ---------- */
+function loadRank(){ try { return JSON.parse(localStorage.getItem('roboenergi_rank') || '[]'); } catch (e) { return []; } }
+function saveRankData(r){ try { localStorage.setItem('roboenergi_rank', JSON.stringify(r)); return true; } catch (e) { return false; } }
+actions.saveRank = () => {
+  const n = ($('#nick').value || '').trim().slice(0, 16);
+  if (!n){ toast('Tulis nama julukan dulu ya!'); return; }
+  const t = totals(), r = loadRank(); r.push({n, nilai: S.hasil ? S.hasil.nilai : 0, skor: t.skor});
+  r.sort((a, b) => b.nilai - a.nilai || b.skor - a.skor);
+  toast(saveRankData(r.slice(0, 20)) ? 'Tersimpan di peringkat! 🏅' : 'Peringkat tidak bisa disimpan di perangkat ini.');
+};
+actions.rank = () => {
+  const r = loadRank().slice(0, 5);
+  openModal(`<h2>🏅 Peringkat Kelas</h2>${r.length ? `<table><tr><th>#</th><th>Julukan</th><th>Nilai</th><th>Skor misi</th></tr>${r.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.n)}</td><td>${x.nilai}</td><td>${x.skor}</td></tr>`).join('')}</table>` : '<p>Belum ada data. Selesaikan asesmen dan simpan namamu!</p>'}
+    <p><button class="btn" data-a="close">Tutup</button></p>`);
+};
+
+/* ---------- Mulai ---------- */
+pembuka();
+</script>
+</body>
+</html>
